@@ -407,10 +407,6 @@ module Authorization
       reset!
     end
 
-    def each(&block)
-      @rules.each(&block)
-    end
-
     private
 
     def reset!
