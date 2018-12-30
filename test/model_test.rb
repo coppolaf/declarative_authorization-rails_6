@@ -166,6 +166,29 @@ class NamedScopeModelTest < Test::Unit::TestCase
     TestModel.delete_all
   end
 
+  def test_obligation_aliases
+    reader = Authorization::Reader::DSLReader.new
+    reader.parse %(
+      authorization do
+        role :test_role do
+          has_permission_on :test_attrs, :to => :read do
+            if_attribute :test_model => { :test_attrs => { :attr => is { user.test_attr_value } } }
+          end
+        end
+      end
+    )
+    Authorization::Engine.instance(reader)
+
+    test_model_1 = TestModel.create!
+    test_attr_1 = test_model_1.test_attrs.create! attr: 1
+    test_model_1.test_attrs.create! attr: 2
+
+    user = MockUser.new(:test_role, test_attr_value: test_attr_1.attr)
+    assert_equal 2, TestAttr.distinct.with_permissions_to(:read, user: user).length
+    TestAttr.delete_all
+    TestModel.delete_all
+  end
+
   def test_with_nested_has_many
     reader = Authorization::Reader::DSLReader.new
     reader.parse %(
@@ -848,41 +871,36 @@ class NamedScopeModelTest < Test::Unit::TestCase
     TestAttr.delete_all
   end
 
-  # TODO: fails in Rails 3 because TestModel.scoped.joins(:test_attr_throughs_with_attr)
-  # does not work
-  if Rails.version < '3'
-    def test_with_contains_through_conditions
-      reader = Authorization::Reader::DSLReader.new
-      reader.parse %(
-        authorization do
-          role :test_role do
-            has_permission_on :test_models, :to => :read do
-              if_attribute :test_attr_throughs_with_attr => contains { user }
-            end
+  def test_with_contains_through_conditions
+    reader = Authorization::Reader::DSLReader.new
+    reader.parse %(
+      authorization do
+        role :test_role do
+          has_permission_on :test_models, :to => :read do
+            if_attribute :test_attr_throughs_with_attr => contains { user }
           end
         end
-      )
-      Authorization::Engine.instance(reader)
+      end
+    )
+    Authorization::Engine.instance(reader)
 
-      test_model_1 = TestModel.create!
-      test_model_2 = TestModel.create!
-      test_model_1.test_attrs.create!(attr: 1).test_attr_throughs.create!
-      test_model_1.test_attrs.create!(attr: 2).test_attr_throughs.create!
-      test_model_2.test_attrs.create!(attr: 1).test_attr_throughs.create!
-      test_model_2.test_attrs.create!(attr: 2).test_attr_throughs.create!
+    test_model_1 = TestModel.create!
+    test_model_2 = TestModel.create!
+    test_model_1.test_attrs.create!(attr: 1).test_attr_throughs.create!
+    test_model_1.test_attrs.create!(attr: 2).test_attr_throughs.create!
+    test_model_2.test_attrs.create!(attr: 1).test_attr_throughs.create!
+    test_model_2.test_attrs.create!(attr: 2).test_attr_throughs.create!
 
-      # assert_equal 1, test_model_1.test_attrs_with_attr.length
-      user = MockUser.new(:test_role,
-                          id: test_model_1.test_attr_throughs.first.id)
-      assert_equal 1, TestModel.with_permissions_to(:read, user: user).length
-      user = MockUser.new(:test_role,
-                          id: test_model_1.test_attr_throughs.last.id)
-      assert_equal 0, TestModel.with_permissions_to(:read, user: user).length
-
-      TestModel.delete_all
-      TestAttrThrough.delete_all
-      TestAttr.delete_all
-    end
+    assert_equal 1, test_model_1.test_attrs_with_attr.length
+    user = MockUser.new(:test_role,
+                        id: test_model_1.test_attr_throughs.first.id)
+    assert_equal 1, TestModel.with_permissions_to(:read, user: user).length
+    user = MockUser.new(:test_role,
+                        id: test_model_1.test_attr_throughs.last.id)
+    assert_equal 0, TestModel.with_permissions_to(:read, user: user).length
+    TestModel.delete_all
+    TestAttrThrough.delete_all
+    TestAttr.delete_all
   end
 
   if Rails.version < '3'

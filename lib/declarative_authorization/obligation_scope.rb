@@ -205,7 +205,7 @@ module Authorization
           table_alias = "#{table_alias[0..(max_length - 3)]}_2"
         end
       end
-
+      table_aliases[path] = table_alias
       table_alias
     end
 
