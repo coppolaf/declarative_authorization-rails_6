@@ -101,6 +101,7 @@ end
 
 class TestApp
   class Application < ::Rails::Application
+    config.active_record.sqlite3.try(:represent_boolean_as_integer=, true)
     config.eager_load = false
     config.secret_key_base = 'testingpurposesonly'
     config.active_support.deprecation = :stderr
@@ -116,11 +117,6 @@ Rails.application.routes.draw do
   match '/name/spaced_things(/:action)' => 'name/spaced_things', :via => %i[get post put patch delete]
   match '/deep/name_spaced/things(/:action)' => 'deep/name_spaced/things', :via => %i[get post put patch delete]
   match '/:controller(/:action(/:id))', via: %i[get post put patch delete]
-end
-class TestApp
-  class Application < ::Rails::Application
-    config.secret_key_base = 'thisstringdoesnothing'
-  end
 end
 
 ActionController::Base.send :include, Authorization::AuthorizationInController
