@@ -171,6 +171,7 @@ module Authorization
       rescue StandardError
         parent.reflect_on_association(path.last)
       end
+      raise "polymorphic not supported #{path.inspect}" if polymorphic?(reflection)
       raise "invalid path #{path.inspect}" if reflection.nil?
 
       reflections[path] = reflection
