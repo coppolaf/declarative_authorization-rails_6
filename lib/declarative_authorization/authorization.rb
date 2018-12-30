@@ -162,7 +162,7 @@ module Authorization
       # Example: permit!( :edit, :object => user.posts )
       #
       if Authorization.is_a_association_proxy?(options[:object]) && options[:object].respond_to?(:new)
-        options[:object] = options[:object].where(nil).new
+        options[:object] = options[:object].proxy_association.initialize_attributes(options[:object].klass.new)
       end
 
       begin
