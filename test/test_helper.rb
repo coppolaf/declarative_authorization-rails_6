@@ -2,7 +2,8 @@ ENV['RAILS_ENV'] = 'test'
 
 require 'pathname'
 require 'bundler/setup'
-require 'rails/all'
+require 'active_record/railtie'
+require 'action_controller/railtie'
 require 'minitest/autorun'
 begin
   require 'rails-controller-testing'
